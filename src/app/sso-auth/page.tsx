@@ -185,95 +185,96 @@ function SSOAuthContent() {
 
   return (
     <div className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6">
-      <div className="w-full max-w-md bg-white dark:bg-slate-900 p-8 sm:p-10 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xl space-y-6">
+      <div className="w-full max-w-md bg-white dark:bg-slate-900 p-6 sm:p-7 rounded-xl border border-slate-200 dark:border-slate-800 space-y-5">
         {/* App Logo & Header */}
-        <div className="text-center space-y-2">
-          <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto shadow-xs">
-            <ShieldCheck className="w-8 h-8" />
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 mb-1">
+            <ShieldCheck className="w-5 h-5" />
+            <span className="text-xs font-semibold uppercase tracking-wider">Otorisasi Single Sign-On</span>
           </div>
-          <h2 className="text-xl font-black text-slate-900 dark:text-white">
-            Izin Otorisasi Single Sign-On
-          </h2>
+          <h1 className="text-lg font-bold text-slate-900 dark:text-white">
+            Hubungkan ke {appInfo?.name || clientId}
+          </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Aplikasi <strong className="text-slate-900 dark:text-white">{appInfo?.name || clientId}</strong> ingin terhubung dengan akun Anda.
+            Aplikasi ini meminta izin untuk memverifikasi identitas Anda menggunakan Akun PSAK FT UPR.
           </p>
         </div>
 
         {error && (
-          <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 flex items-start gap-3 text-xs text-rose-700 dark:text-rose-300">
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 flex items-start gap-2 text-xs text-rose-700 dark:text-rose-300">
+            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
         )}
 
         {/* User preview */}
-        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-slate-800 flex items-center gap-3">
+        <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center gap-3">
           {profile?.photoURL ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={profile.photoURL}
               alt={profile.displayName}
-              className="w-12 h-12 rounded-xl object-cover border border-slate-300 dark:border-slate-700"
+              className="w-10 h-10 rounded-md object-cover border border-slate-200 dark:border-slate-700"
             />
           ) : (
-            <div className="w-12 h-12 rounded-xl bg-indigo-600 text-white font-bold flex items-center justify-center text-base">
+            <div className="w-10 h-10 rounded-md bg-indigo-600 text-white font-bold flex items-center justify-center text-sm">
               {profile?.displayName ? profile.displayName[0].toUpperCase() : "U"}
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
+            <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
               {profile?.displayName}
             </p>
-            <p className="text-xs font-mono text-slate-500 dark:text-slate-400">
+            <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate">
               NIM: {profile?.nim} • {profile?.prodi}
             </p>
           </div>
         </div>
 
         {/* Permissions Scope */}
-        <div className="space-y-2">
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+        <div className="space-y-1.5 pt-1">
+          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
             Data yang akan dibagikan:
           </p>
-          <ul className="text-xs space-y-1.5 text-slate-600 dark:text-slate-400 pl-1">
+          <ul className="text-xs space-y-1 text-slate-600 dark:text-slate-400">
             <li className="flex items-center gap-2">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
               Nama Lengkap, Email & Foto Profil
             </li>
             <li className="flex items-center gap-2">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
-              NIM, Program Studi & Angkatan Mahasiswa
+              NIM, Program Studi & Angkatan
             </li>
             <li className="flex items-center gap-2">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
-              Status Keaktifan Organisasi
+              Status Keanggotaan Mahasiswa
             </li>
           </ul>
         </div>
 
         {/* Action buttons */}
-        <div className="flex flex-col gap-2 pt-2">
+        <div className="flex flex-col gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
           <button
             onClick={handleAuthorize}
             disabled={authorizing}
-            className="w-full py-3 px-4 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-600/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-sm disabled:opacity-60 cursor-pointer"
+            className="w-full py-2.5 px-4 rounded-lg font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-60 cursor-pointer"
           >
             {authorizing ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Memberikan Izin...
+                Mengotorisasi...
               </>
             ) : (
-              "Izinkan & Lanjutkan"
+              "Izinkan Akses"
             )}
           </button>
 
           <button
             onClick={handleCancel}
             disabled={authorizing}
-            className="w-full py-2.5 px-4 rounded-xl font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-xs cursor-pointer"
+            className="w-full py-2 px-4 rounded-lg font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-xs cursor-pointer"
           >
-            Batalkan
+            Tolak / Batalkan
           </button>
         </div>
       </div>

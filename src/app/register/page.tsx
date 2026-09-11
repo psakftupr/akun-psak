@@ -147,251 +147,227 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex-1 py-12 px-4 sm:px-6 lg:px-8 max-w-3xl mx-auto w-full">
-      <div className="bg-white dark:bg-slate-900 p-8 sm:p-10 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xl shadow-slate-200/40 dark:shadow-none space-y-8">
+    <div className="flex-1 py-10 px-4 sm:px-6 lg:px-8 max-w-2xl mx-auto w-full">
+      <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-xl border border-slate-200 dark:border-slate-800 space-y-6">
         {/* Header */}
-        <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto mb-3">
-            <UserPlus className="w-6 h-6" />
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-            Pendaftaran Anggota PSAK FT UPR
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-            Khusus mahasiswa kristen Fakultas Teknik Universitas Palangka Raya. Pastikan NIM dan data diri Anda diisi dengan benar.
+        <div className="space-y-1">
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white">
+            Pendaftaran Anggota Baru
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Khusus mahasiswa kristen Fakultas Teknik Universitas Palangka Raya. Pastikan NIM dan data diri diisi dengan benar.
           </p>
         </div>
 
         {/* Error Alert */}
         {error && (
-          <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 flex items-start gap-3 text-xs sm:text-sm text-rose-700 dark:text-rose-300">
-            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+          <div className="p-3.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 flex items-start gap-2.5 text-xs text-rose-700 dark:text-rose-300">
+            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
         )}
 
         {/* Success Alert */}
         {success && (
-          <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center gap-3 text-xs sm:text-sm text-emerald-700 dark:text-emerald-300">
-            <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-600" />
-            <span>Pendaftaran berhasil! Mengalihkan ke beranda akun Anda...</span>
+          <div className="p-3.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center gap-2.5 text-xs text-emerald-700 dark:text-emerald-300">
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-600" />
+            <span>Pendaftaran berhasil! Mengalihkan ke halaman akun...</span>
           </div>
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Nama Lengkap */}
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                Nama Lengkap Mahasiswa *
-              </label>
-              <div className="relative">
-                <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Section: Data Akademik */}
+          <div className="space-y-3 pt-1">
+            <h2 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              1. Data Mahasiswa & Akademik
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              {/* Nama Lengkap */}
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Nama Lengkap *
+                </label>
                 <input
                   type="text"
                   required
                   value={formData.displayName}
                   onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-                  placeholder="Contoh: Gabriel Mario"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Nama lengkap sesuai data akademik"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
-            </div>
 
-            {/* Email */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                Alamat Email Aktif *
-              </label>
-              <div className="relative">
-                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
-                <input
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="nama@upr.ac.id"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-            </div>
-
-            {/* WhatsApp */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                Nomor WhatsApp *
-              </label>
-              <div className="relative">
-                <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
-                <input
-                  type="tel"
-                  required
-                  value={formData.whatsapp}
-                  onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
-                  placeholder="08123456789"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-            </div>
-
-            {/* NIM */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                NIM (Nomor Induk Mahasiswa) *
-              </label>
-              <div className="relative">
-                <GraduationCap className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+              {/* NIM */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  NIM (Permanen) *
+                </label>
                 <input
                   type="text"
                   required
                   value={formData.nim}
                   onChange={(e) => setFormData({ ...formData, nim: e.target.value })}
                   placeholder="Contoh: 213020503001"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
+                <span className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5 block">
+                  NIM tidak dapat diubah setelah terdaftar.
+                </span>
               </div>
-              <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1">
-                ⚠️ Catatan: NIM bersifat permanen dan tidak dapat diubah setelah terdaftar.
-              </p>
-            </div>
 
-            {/* Jenis Kelamin */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                Jenis Kelamin *
-              </label>
-              <select
-                value={formData.gender}
-                onChange={(e) => setFormData({ ...formData, gender: e.target.value as any })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                {GENDER_OPTIONS.map((g) => (
-                  <option key={g} value={g}>
-                    {g}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Program Studi */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                Program Studi (FT UPR) *
-              </label>
-              <select
-                value={formData.prodi}
-                onChange={(e) => setFormData({ ...formData, prodi: e.target.value as any })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                {PRODI_OPTIONS.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Angkatan */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                Tahun Angkatan *
-              </label>
-              <input
-                type="number"
-                required
-                min={2015}
-                max={new Date().getFullYear() + 1}
-                value={formData.angkatan}
-                onChange={(e) => setFormData({ ...formData, angkatan: parseInt(e.target.value) || 2024 })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-
-            {/* Jalur Masuk */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                Jalur Masuk Kuliah *
-              </label>
-              <select
-                value={formData.jalurMasuk}
-                onChange={(e) => setFormData({ ...formData, jalurMasuk: e.target.value as any })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                {JALUR_MASUK_OPTIONS.map((j) => (
-                  <option key={j} value={j}>
-                    {j}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Foto Profil URL (Optional) */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                URL Foto Profil (Opsional)
-              </label>
-              <div className="relative">
-                <ImageIcon className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+              {/* WhatsApp */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Nomor WhatsApp *
+                </label>
                 <input
-                  type="url"
-                  value={formData.photoURL}
-                  onChange={(e) => setFormData({ ...formData, photoURL: e.target.value })}
-                  placeholder="https://lh3.googleusercontent.com/..."
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  type="tel"
+                  required
+                  value={formData.whatsapp}
+                  onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                  placeholder="08123456789"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
-            </div>
 
-            {/* Kata Sandi */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                Kata Sandi Baru *
-              </label>
-              <div className="relative">
-                <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+              {/* Program Studi */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Program Studi *
+                </label>
+                <select
+                  value={formData.prodi}
+                  onChange={(e) => setFormData({ ...formData, prodi: e.target.value as any })}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  {PRODI_OPTIONS.map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Angkatan */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Tahun Angkatan *
+                </label>
+                <input
+                  type="number"
+                  required
+                  min={2015}
+                  max={new Date().getFullYear() + 1}
+                  value={formData.angkatan}
+                  onChange={(e) => setFormData({ ...formData, angkatan: parseInt(e.target.value) || 2024 })}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              {/* Jenis Kelamin */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Jenis Kelamin *
+                </label>
+                <select
+                  value={formData.gender}
+                  onChange={(e) => setFormData({ ...formData, gender: e.target.value as any })}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  {GENDER_OPTIONS.map((g) => (
+                    <option key={g} value={g}>
+                      {g}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Jalur Masuk */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Jalur Masuk Kuliah *
+                </label>
+                <select
+                  value={formData.jalurMasuk}
+                  onChange={(e) => setFormData({ ...formData, jalurMasuk: e.target.value as any })}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  {JALUR_MASUK_OPTIONS.map((j) => (
+                    <option key={j} value={j}>
+                      {j}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Section: Akun & Kata Sandi */}
+          <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <h2 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              2. Kredensial Masuk
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              {/* Email */}
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Alamat Email Aktif *
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="nama@email.com"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              {/* Kata Sandi */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Kata Sandi *
+                </label>
                 <input
                   type="password"
                   required
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   placeholder="Minimal 6 karakter"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
-            </div>
 
-            {/* Konfirmasi Kata Sandi */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                Ulangi Kata Sandi *
-              </label>
-              <div className="relative">
-                <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+              {/* Konfirmasi Kata Sandi */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Konfirmasi Kata Sandi *
+                </label>
                 <input
                   type="password"
                   required
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                   placeholder="Ulangi kata sandi"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
             </div>
           </div>
 
           {/* Pernyataan Kebenaran Data */}
-          <div className="p-4 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-800/80">
-            <label className="flex items-start gap-3 cursor-pointer select-none">
+          <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+            <label className="flex items-start gap-2.5 cursor-pointer select-none">
               <input
                 type="checkbox"
                 required
                 checked={formData.statementAgreement}
                 onChange={(e) => setFormData({ ...formData, statementAgreement: e.target.checked })}
-                className="w-4 h-4 mt-1 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300"
+                className="w-4 h-4 mt-0.5 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300"
               />
-              <span className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
-                Saya menyatakan dengan sesungguhnya bahwa data yang saya masukkan (NIM, Nama, Prodi, dan status keanggotaan) adalah <strong>benar, sah, dan asli</strong> sebagai sivitas akademika Kristen Fakultas Teknik Universitas Palangka Raya.
+              <span className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                Saya menyatakan data yang dimasukkan adalah <strong>benar dan sah</strong> sebagai mahasiswa Kristen FT UPR.
               </span>
             </label>
           </div>
@@ -399,31 +375,28 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading || success}
-            className="w-full py-3.5 px-4 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-600/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-sm disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+            className="w-full py-2.5 px-4 rounded-lg font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-60 cursor-pointer"
           >
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Mendaftarkan Akun Anda...
+                Mendaftarkan Akun...
               </>
             ) : (
-              <>
-                <Sparkles className="w-4 h-4" />
-                Selesaikan Pendaftaran Anggota
-              </>
+              "Daftar Sebagai Anggota"
             )}
           </button>
         </form>
 
         {/* Footer info */}
-        <div className="text-center pt-2 border-t border-slate-100 dark:border-slate-800">
+        <div className="pt-4 border-t border-slate-100 dark:border-slate-800 text-center">
           <p className="text-xs text-slate-600 dark:text-slate-400">
-            Sudah memiliki akun terdaftar?{" "}
+            Sudah memiliki akun?{" "}
             <Link
               href="/login"
-              className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
+              className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
             >
-              Masuk di Sini
+              Masuk ke akun Anda
             </Link>
           </p>
         </div>

@@ -22,45 +22,42 @@ export const Navbar: React.FC = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-md bg-white/85 dark:bg-slate-950/85 border-b border-slate-200/80 dark:border-slate-800/80 transition-colors">
+    <header className="sticky top-0 z-50 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Brand Logo */}
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-blue-600 to-sky-400 flex items-center justify-center text-white font-black shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
+          <Link href="/" className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-sm tracking-wider">
               P
             </div>
             <div className="flex flex-col">
-              <span className="font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight flex items-center gap-1.5">
+              <span className="font-bold text-slate-900 dark:text-white tracking-tight leading-none text-base">
                 PSAK FT UPR
-                <span className="text-[10px] font-semibold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800">
-                  SSO v2.9
-                </span>
               </span>
-              <span className="text-xs text-slate-500 dark:text-slate-400">
-                akun.psak.my.id
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight mt-0.5">
+                Akun & Single Sign-On
               </span>
             </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1 lg:gap-2">
+          <nav className="hidden md:flex items-center gap-1">
             <Link
               href="/"
-              className="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-colors"
+              className="px-3 py-2 rounded-md text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
               Beranda
             </Link>
             <Link
               href="/directory"
-              className="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-colors flex items-center gap-1.5"
+              className="px-3 py-2 rounded-md text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-1.5"
             >
               <Users className="w-4 h-4 text-slate-500" />
               Direktori Anggota
             </Link>
             <Link
               href="/stats"
-              className="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-colors flex items-center gap-1.5"
+              className="px-3 py-2 rounded-md text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-1.5"
             >
               <BarChart3 className="w-4 h-4 text-slate-500" />
               Statistik
@@ -69,7 +66,7 @@ export const Navbar: React.FC = () => {
             {isAdmin && (
               <Link
                 href="/admin"
-                className="px-3 py-2 rounded-lg text-sm font-medium text-amber-700 dark:text-amber-300 bg-amber-50/80 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-amber-200/80 dark:border-amber-800/60 transition-colors flex items-center gap-1.5"
+                className="px-3 py-2 rounded-md text-sm font-medium text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-amber-200 dark:border-amber-800/60 transition-colors flex items-center gap-1.5"
               >
                 <Shield className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                 Panel Admin
@@ -78,27 +75,27 @@ export const Navbar: React.FC = () => {
           </nav>
 
           {/* Right Action: Auth Buttons or User Profile */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-2.5">
             {user ? (
               <div className="relative">
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="flex items-center gap-2.5 p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="flex items-center gap-2 p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   {profile?.photoURL ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={profile.photoURL}
                       alt={profile.displayName || "User"}
-                      className="w-9 h-9 rounded-full object-cover border-2 border-indigo-500/30"
+                      className="w-7 h-7 rounded-full object-cover border border-slate-200"
                     />
                   ) : (
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-white flex items-center justify-center font-bold text-sm">
+                    <div className="w-7 h-7 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-xs">
                       {(profile?.displayName || user.email || "U")[0].toUpperCase()}
                     </div>
                   )}
-                  <div className="text-left hidden lg:block pr-2">
-                    <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight truncate max-w-[130px]">
+                  <div className="text-left pr-1">
+                    <p className="text-xs font-semibold text-slate-900 dark:text-white leading-tight truncate max-w-[130px]">
                       {profile?.displayName || user.email?.split("@")[0]}
                     </p>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400 capitalize">
@@ -109,14 +106,14 @@ export const Navbar: React.FC = () => {
 
                 {/* Dropdown Menu */}
                 {dropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 py-2 z-50 animate-in fade-in slide-in-from-top-2">
-                    <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800">
-                      <p className="text-xs text-slate-500 dark:text-slate-400">Masuk sebagai</p>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                  <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-slate-900 rounded-lg shadow-lg border border-slate-200 dark:border-slate-800 py-1.5 z-50">
+                    <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800">
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">Masuk sebagai</p>
+                      <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
                         {profile?.displayName || user.email}
                       </p>
                       {profile?.nim && (
-                        <p className="text-xs font-mono text-indigo-600 dark:text-indigo-400">
+                        <p className="text-[11px] font-mono text-indigo-600 dark:text-indigo-400">
                           NIM: {profile.nim}
                         </p>
                       )}
@@ -125,9 +122,9 @@ export const Navbar: React.FC = () => {
                     <Link
                       href="/profile"
                       onClick={() => setDropdownOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                      className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
                     >
-                      <User className="w-4 h-4 text-slate-500" />
+                      <User className="w-3.5 h-3.5 text-slate-500" />
                       Profil Saya
                     </Link>
 
@@ -135,9 +132,9 @@ export const Navbar: React.FC = () => {
                       <Link
                         href="/admin"
                         onClick={() => setDropdownOpen(false)}
-                        className="flex items-center gap-2.5 px-4 py-2 text-sm text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40"
+                        className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40"
                       >
-                        <Settings className="w-4 h-4" />
+                        <Settings className="w-3.5 h-3.5" />
                         Dashboard Admin
                       </Link>
                     )}
@@ -149,9 +146,9 @@ export const Navbar: React.FC = () => {
                         setDropdownOpen(false);
                         logout();
                       }}
-                      className="w-full text-left flex items-center gap-2.5 px-4 py-2 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                      className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer"
                     >
-                      <LogOut className="w-4 h-4" />
+                      <LogOut className="w-3.5 h-3.5" />
                       Keluar
                     </button>
                   </div>
@@ -161,16 +158,15 @@ export const Navbar: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Link
                   href="/login"
-                  className="px-4 py-2 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-colors"
+                  className="px-3.5 py-1.5 rounded-md text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 >
                   Masuk
                 </Link>
                 <Link
                   href="/register"
-                  className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-600/20 active:scale-95 transition-all flex items-center gap-1.5"
+                  className="px-3.5 py-1.5 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
                 >
-                  <Sparkles className="w-4 h-4" />
-                  Daftar Anggota
+                  Daftar
                 </Link>
               </div>
             )}
