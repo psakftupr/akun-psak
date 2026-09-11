@@ -1,0 +1,290 @@
+"use client";
+
+import React, { useState, useEffect, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase/config";
+import { useAuth } from "@/lib/firebase/auth-context";
+import { 
+  ShieldCheck, 
+  KeyRound, 
+  AlertCircle, 
+  Loader2, 
+  ArrowRight, 
+  CheckCircle2, 
+  XCircle,
+  ExternalLink
+} from "lucide-react";
+
+function SSOAuthContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const { user, profile, loading: authLoading } = useAuth();
+
+  const clientId = searchParams.get("client_id") || searchParams.get("clientId");
+  const redirectUri = searchParams.get("redirect_uri") || searchParams.get("redirectUri");
+  const state = searchParams.get("state") || "";
+
+  const [appInfo, setAppInfo] = useState<any>(null);
+  const [loadingApp, setLoadingApp] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [authorizing, setAuthorizing] = useState(false);
+
+  // Fetch App registration
+  useEffect(() => {
+    async function loadApp() {
+      if (!clientId) {
+        setError("Parameter 'client_id' tidak ditemukan. Permintaan otorisasi tidak valid.");
+        setLoadingApp(false);
+        return;
+      }
+
+      try {
+        const appRef = doc(db, "applications", clientId);
+        const appSnap = await getDoc(appRef);
+
+        if (appSnap.exists()) {
+          const data = appSnap.data();
+          if (data.active === false) {
+            setError("Aplikasi ini sedang dinonaktifkan oleh administrator PSAK.");
+          } else {
+            setAppInfo(data);
+          }
+        } else {
+          // Fallback demo info if testing
+          setAppInfo({
+            name: clientId.toUpperCase(),
+            description: "Aplikasi Ekosistem PSAK FT UPR",
+            clientId: clientId,
+          });
+        }
+      } catch (err: any) {
+        console.error("Error loading application info:", err);
+        setError("Gagal memvalidasi aplikasi klien: " + err.message);
+      } finally {
+        setLoadingApp(false);
+      }
+    }
+
+    loadApp();
+  }, [clientId]);
+
+  const handleAuthorize = async () => {
+    if (!user || !profile || !clientId) return;
+
+    setAuthorizing(true);
+    setError(null);
+
+    try {
+      // 1. Generate unique 32-char authorization code
+      const code = "psak_" + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+
+      // 2. Set token expiration to 5 minutes
+      const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+
+      // 3. Save to sso_tokens/{code} in Firestore
+      const tokenRef = doc(db, "sso_tokens", code);
+      await setDoc(tokenRef, {
+        code,
+        appId: clientId,
+        userId: user.uid,
+        email: profile.email || user.email || "",
+        displayName: profile.displayName || "",
+        photoURL: profile.photoURL || "",
+        role: profile.role || "anggota",
+        nim: profile.nim || "",
+        gender: profile.gender || "",
+        prodi: profile.prodi || "",
+        angkatan: profile.angkatan || 0,
+        jalurMasuk: profile.jalurMasuk || "",
+        whatsapp: profile.whatsapp || "",
+        expiresAt,
+        createdAt: new Date().toISOString(),
+      });
+
+      // 4. Return to opener (if popup) or redirect
+      if (typeof window !== "undefined" && window.opener) {
+        window.opener.postMessage(
+          {
+            type: "PSAK_SSO_SUCCESS",
+            code,
+            state,
+          },
+          "*"
+        );
+        setTimeout(() => window.close(), 600);
+      } else if (redirectUri) {
+        const target = new URL(redirectUri);
+        target.searchParams.set("code", code);
+        if (state) target.searchParams.set("state", state);
+        window.location.href = target.toString();
+      } else {
+        // Just show success
+        alert("Otorisasi berhasil! Kode otentikasi Anda: " + code);
+      }
+    } catch (err: any) {
+      console.error("Authorize error:", err);
+      setError("Gagal memberikan otorisasi: " + err.message);
+      setAuthorizing(false);
+    }
+  };
+
+  const handleCancel = () => {
+    if (typeof window !== "undefined" && window.opener) {
+      window.opener.postMessage(
+        {
+          type: "PSAK_SSO_CANCEL",
+          state,
+        },
+        "*"
+      );
+      window.close();
+    } else if (redirectUri) {
+      const target = new URL(redirectUri);
+      target.searchParams.set("error", "access_denied");
+      if (state) target.searchParams.set("state", state);
+      window.location.href = target.toString();
+    } else {
+      router.push("/");
+    }
+  };
+
+  if (authLoading || loadingApp) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-12">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
+
+  // If user is not logged in, prompt to login first
+  if (!user) {
+    const currentQuery = typeof window !== "undefined" ? window.location.search : "";
+    return (
+      <div className="flex-1 flex items-center justify-center py-12 px-4">
+        <div className="w-full max-w-md bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xl text-center space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
+            <KeyRound className="w-6 h-6" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+            Autentikasi Diperlukan
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Aplikasi <strong>{appInfo?.name || clientId}</strong> meminta Anda untuk masuk menggunakan Akun PSAK FT UPR.
+          </p>
+          <button
+            onClick={() => router.push(`/login?returnUrl=${encodeURIComponent("/sso-auth" + currentQuery)}`)}
+            className="w-full py-3 px-4 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-all text-sm cursor-pointer"
+          >
+            Masuk ke Akun PSAK
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6">
+      <div className="w-full max-w-md bg-white dark:bg-slate-900 p-8 sm:p-10 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xl space-y-6">
+        {/* App Logo & Header */}
+        <div className="text-center space-y-2">
+          <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto shadow-xs">
+            <ShieldCheck className="w-8 h-8" />
+          </div>
+          <h2 className="text-xl font-black text-slate-900 dark:text-white">
+            Izin Otorisasi Single Sign-On
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Aplikasi <strong className="text-slate-900 dark:text-white">{appInfo?.name || clientId}</strong> ingin terhubung dengan akun Anda.
+          </p>
+        </div>
+
+        {error && (
+          <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 flex items-start gap-3 text-xs text-rose-700 dark:text-rose-300">
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* User preview */}
+        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-slate-800 flex items-center gap-3">
+          {profile?.photoURL ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={profile.photoURL}
+              alt={profile.displayName}
+              className="w-12 h-12 rounded-xl object-cover border border-slate-300 dark:border-slate-700"
+            />
+          ) : (
+            <div className="w-12 h-12 rounded-xl bg-indigo-600 text-white font-bold flex items-center justify-center text-base">
+              {profile?.displayName ? profile.displayName[0].toUpperCase() : "U"}
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
+              {profile?.displayName}
+            </p>
+            <p className="text-xs font-mono text-slate-500 dark:text-slate-400">
+              NIM: {profile?.nim} • {profile?.prodi}
+            </p>
+          </div>
+        </div>
+
+        {/* Permissions Scope */}
+        <div className="space-y-2">
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            Data yang akan dibagikan:
+          </p>
+          <ul className="text-xs space-y-1.5 text-slate-600 dark:text-slate-400 pl-1">
+            <li className="flex items-center gap-2">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+              Nama Lengkap, Email & Foto Profil
+            </li>
+            <li className="flex items-center gap-2">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+              NIM, Program Studi & Angkatan Mahasiswa
+            </li>
+            <li className="flex items-center gap-2">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+              Status Keaktifan Organisasi
+            </li>
+          </ul>
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex flex-col gap-2 pt-2">
+          <button
+            onClick={handleAuthorize}
+            disabled={authorizing}
+            className="w-full py-3 px-4 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-600/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-sm disabled:opacity-60 cursor-pointer"
+          >
+            {authorizing ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Memberikan Izin...
+              </>
+            ) : (
+              "Izinkan & Lanjutkan"
+            )}
+          </button>
+
+          <button
+            onClick={handleCancel}
+            disabled={authorizing}
+            className="w-full py-2.5 px-4 rounded-xl font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-xs cursor-pointer"
+          >
+            Batalkan
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function SSOAuthPage() {
+  return (
+    <Suspense fallback={<div className="flex-1 flex items-center justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-indigo-600" /></div>}>
+      <SSOAuthContent />
+    </Suspense>
+  );
+}
