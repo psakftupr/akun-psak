@@ -15,5 +15,8 @@
       "binding": "AKUN_KV",
       "id": "20766bebc76d41e1984bcf952b216190"
     }
-  ]
+  ],
+  "build": {
+    "command": "npx @opennextjs/cloudflare build"
+  }
 }
