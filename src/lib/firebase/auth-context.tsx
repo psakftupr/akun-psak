@@ -72,6 +72,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
+    if (typeof window === "undefined" || !auth || !auth.app) {
+      setLoading(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
@@ -92,7 +97,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [user, fetchProfile]);
 
   const logout = useCallback(async () => {
-    await signOut(auth);
+    if (auth && auth.app) {
+      await signOut(auth);
+    }
     setUser(null);
     setProfile(null);
   }, []);

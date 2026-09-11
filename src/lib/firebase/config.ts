@@ -13,7 +13,8 @@ const firebaseConfig = {
 };
 
 const app: FirebaseApp = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-const auth: Auth = getAuth(app);
-const db: Firestore = getFirestore(app);
+
+const auth: Auth = typeof window !== "undefined" ? getAuth(app) : ({} as Auth);
+const db: Firestore = typeof window !== "undefined" ? getFirestore(app) : ({} as Firestore);
 
 export { app, auth, db, firebaseConfig };
