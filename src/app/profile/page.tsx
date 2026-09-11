@@ -1,35 +1,39 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { updateProfile } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import React, { useState, useEffect, Suspense } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { updateProfile, sendPasswordResetEmail } from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase/config";
 import { useAuth } from "@/lib/firebase/auth-context";
 import { 
   User, 
   Mail, 
-  GraduationCap, 
   Phone, 
   Save, 
   AlertCircle, 
   CheckCircle2, 
   Loader2, 
-  ShieldCheck, 
-  Building2, 
-  Calendar,
-  Lock,
-  Globe,
-  Link2,
-  EyeOff,
-  Image as ImageIcon,
-  Sparkles
+  Lock, 
+  Shield, 
+  EyeOff, 
+  ArrowLeft,
+  KeyRound,
+  LogOut,
+  ExternalLink,
+  Globe
 } from "lucide-react";
 
-export default function ProfilePage() {
+function ProfileContent() {
   const router = useRouter();
-  const { user, profile, loading: authLoading, refreshProfile } = useAuth();
+  const searchParams = useSearchParams();
+  const targetUid = searchParams.get("uid");
+  const { user, profile, loading: authLoading, refreshProfile, logout } = useAuth();
 
+  const [activeTab, setActiveTab] = useState<"detail" | "privacy" | "account">("detail");
+
+  // State untuk form edit profil pengguna login
   const [formData, setFormData] = useState({
     displayName: "",
     photoURL: "",
@@ -44,14 +48,40 @@ export default function ProfilePage() {
     hideProfileInDirectory: false,
   });
 
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  // State untuk melihat profil publik anggota lain jika ada targetUid
+  const [publicProfile, setPublicProfile] = useState<any>(null);
+  const [loadingPublic, setLoadingPublic] = useState(false);
 
+  const [saving, setSaving] = useState(false);
+  const [resettingPassword, setResettingPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  // Load public profile if targetUid is provided and not current user
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push("/login?returnUrl=/profile");
-    } else if (profile) {
+    async function loadPublicProfile() {
+      if (targetUid && targetUid !== user?.uid) {
+        setLoadingPublic(true);
+        try {
+          const snap = await getDoc(doc(db, "users", targetUid));
+          if (snap.exists()) {
+            setPublicProfile(snap.data());
+          } else {
+            setError("Profil anggota tidak ditemukan.");
+          }
+        } catch (err: any) {
+          setError("Gagal memuat profil: " + err.message);
+        } finally {
+          setLoadingPublic(false);
+        }
+      }
+    }
+    loadPublicProfile();
+  }, [targetUid, user]);
+
+  // Sync state with logged in profile
+  useEffect(() => {
+    if (profile && (!targetUid || targetUid === user?.uid)) {
       setFormData({
         displayName: profile.displayName || "",
         photoURL: profile.photoURL || "",
@@ -66,24 +96,24 @@ export default function ProfilePage() {
         hideProfileInDirectory: profile.hideProfileInDirectory || false,
       });
     }
-  }, [user, profile, authLoading, router]);
+  }, [profile, targetUid, user]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
     setError(null);
-    setSuccess(false);
+    setSuccess(null);
     setSaving(true);
 
     try {
-      // 1. Update Firebase Auth Profile (displayName & photoURL)
+      // 1. Update Auth profile
       await updateProfile(user, {
         displayName: formData.displayName.trim(),
         photoURL: formData.photoURL.trim() || undefined,
       });
 
-      // 2. Update Firestore user document (protecting role, status, nim by preserving resource rules)
+      // 2. Update Firestore profile
       const userRef = doc(db, "users", user.uid);
       await setDoc(
         userRef,
@@ -105,294 +135,439 @@ export default function ProfilePage() {
       );
 
       await refreshProfile();
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 4000);
+      setSuccess("Profil berhasil diperbarui.");
+      setTimeout(() => setSuccess(null), 4000);
     } catch (err: any) {
-      console.error("Save profile error:", err);
-      setError("Gagal menyimpan profil: " + (err.message || "Terjadi kesalahan."));
+      setError("Gagal menyimpan: " + err.message);
     } finally {
       setSaving(false);
     }
   };
 
-  if (authLoading) {
+  const handlePasswordReset = async () => {
+    if (!user?.email) return;
+    setResettingPassword(true);
+    setError(null);
+    try {
+      await sendPasswordResetEmail(auth, user.email);
+      setSuccess("Tautan reset kata sandi telah dikirimkan ke email Anda.");
+    } catch (err: any) {
+      setError("Gagal mengirim email reset: " + err.message);
+    } finally {
+      setResettingPassword(false);
+    }
+  };
+
+  if (authLoading || loadingPublic) {
     return (
-      <div className="flex-1 flex items-center justify-center p-12">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+      <div className="flex-1 min-h-[85vh] flex flex-col items-center justify-center p-4">
+        <div className="w-full max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 text-center space-y-3">
+          <Loader2 className="w-7 h-7 animate-spin text-indigo-600 mx-auto" />
+          <p className="text-xs text-slate-500">Memuat profil...</p>
+        </div>
       </div>
     );
   }
 
-  if (!profile) {
-    return null;
-  }
-
-  return (
-    <div className="flex-1 py-8 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full space-y-6">
-      {/* Top Banner Card */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center gap-5">
-        <div>
-          {formData.photoURL ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={formData.photoURL}
-              alt={formData.displayName}
-              className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg object-cover border border-slate-200 dark:border-slate-700"
-            />
-          ) : (
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-2xl border border-slate-200 dark:border-slate-700">
-              {formData.displayName ? formData.displayName[0].toUpperCase() : "U"}
-            </div>
-          )}
+  // JIKA MELIHAT PROFIL ANGGOTA LAIN (PUBLIK)
+  if (targetUid && targetUid !== user?.uid && publicProfile) {
+    if (publicProfile.hideProfileInDirectory) {
+      return (
+        <div className="flex-1 min-h-[85vh] flex flex-col items-center justify-center p-4 sm:p-6 w-full">
+          <div className="w-full max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs text-center space-y-4">
+            <EyeOff className="w-8 h-8 text-slate-400 mx-auto" />
+            <h2 className="text-base font-bold text-slate-900 dark:text-white">Profil Bersifat Privat</h2>
+            <p className="text-xs text-slate-500">Mahasiswa ini memilih untuk menyembunyikan profil publiknya.</p>
+            <Link href="/directory" className="inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:underline">
+              <ArrowLeft className="w-3 h-3" /> Kembali ke Direktori
+            </Link>
+          </div>
         </div>
+      );
+    }
 
-        <div className="flex-1 text-center sm:text-left space-y-1">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-              {formData.displayName || "Mahasiswa PSAK"}
-            </h1>
-            <span className="inline-flex self-center sm:self-auto text-[11px] font-medium px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 capitalize">
-              {profile.role}
-            </span>
+    return (
+      <div className="flex-1 min-h-[85vh] flex flex-col items-center justify-center p-4 sm:p-6 w-full">
+        <div className="w-full max-w-sm sm:max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs space-y-5">
+          {/* Header */}
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+            <Link href="/" className="flex items-center gap-2 hover:opacity-80">
+              <div className="w-6 h-6 rounded bg-indigo-600 flex items-center justify-center text-white font-bold text-xs">P</div>
+              <span className="text-xs font-bold text-slate-900 dark:text-white">Akun PSAK FT UPR</span>
+            </Link>
+            <span className="text-[11px] text-slate-400 font-medium">Profil Publik</span>
           </div>
 
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            {profile.email} • Terdaftar sejak {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString("id-ID") : "-"}
-          </p>
+          <div className="flex items-center gap-3.5">
+            {publicProfile.photoURL && !publicProfile.hidePhotoInDirectory ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={publicProfile.photoURL} alt="" className="w-14 h-14 rounded-xl object-cover border border-slate-200 dark:border-slate-700" />
+            ) : (
+              <div className="w-14 h-14 rounded-xl bg-indigo-600 text-white font-bold text-xl flex items-center justify-center">
+                {(publicProfile.displayName || "U")[0].toUpperCase()}
+              </div>
+            )}
+            <div>
+              <h1 className="text-base font-bold text-slate-900 dark:text-white">{publicProfile.displayName}</h1>
+              <p className="text-xs font-mono text-slate-500">NIM: {publicProfile.nim || "-"}</p>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                  {publicProfile.prodi}
+                </span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300">
+                  {publicProfile.angkatan}
+                </span>
+              </div>
+            </div>
+          </div>
 
-          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 pt-1">
-            <span className="text-xs font-mono font-medium px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-              NIM: {profile.nim}
-            </span>
-            <span className="text-xs font-medium px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-              {profile.prodi} ({profile.angkatan})
-            </span>
-            <span className="text-xs font-medium px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-              {profile.status}
-            </span>
+          <div className="bg-slate-50 dark:bg-slate-950/60 rounded-xl p-3.5 border border-slate-200/80 dark:border-slate-800/80 space-y-2 text-xs">
+            <div className="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-800/60">
+              <span className="text-slate-500">Jurusan</span>
+              <span className="font-semibold text-slate-800 dark:text-slate-200">{publicProfile.prodi}</span>
+            </div>
+            <div className="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-800/60">
+              <span className="text-slate-500">Angkatan</span>
+              <span className="font-semibold text-slate-800 dark:text-slate-200">{publicProfile.angkatan}</span>
+            </div>
+            {publicProfile.minatBakat && (
+              <div className="py-1">
+                <span className="text-slate-500 block mb-0.5">Minat & Bakat:</span>
+                <p className="text-slate-700 dark:text-slate-300">{publicProfile.minatBakat}</p>
+              </div>
+            )}
+          </div>
+
+          <div className="pt-2 text-center">
+            <Link href="/directory" className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-indigo-600">
+              <ArrowLeft className="w-3.5 h-3.5" /> Kembali ke Direktori
+            </Link>
           </div>
         </div>
       </div>
+    );
+  }
 
-      {/* Error & Success alerts */}
-      {error && (
-        <div className="p-3.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 flex items-start gap-2.5 text-xs text-rose-700 dark:text-rose-300">
-          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-          <span>{error}</span>
-        </div>
-      )}
-
-      {success && (
-        <div className="p-3.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center gap-2.5 text-xs text-emerald-700 dark:text-emerald-300">
-          <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-600" />
-          <span>Profil berhasil diperbarui dan disinkronkan.</span>
-        </div>
-      )}
-
-      {/* Form Settings */}
-      <form onSubmit={handleSave} className="bg-white dark:bg-slate-900 rounded-xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 space-y-6">
-        <div>
-          <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-            Informasi Pribadi & Kontak
-          </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Data ini digunakan untuk sinkronisasi akun dan integrasi SSO PSAK FT UPR.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Nama Lengkap */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Nama Lengkap Mahasiswa
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.displayName}
-              onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
+  // JIKA BELUM LOGIN DAN TIDAK ADA TARGET UID
+  if (!user) {
+    return (
+      <div className="flex-1 min-h-[85vh] flex flex-col items-center justify-center p-4 sm:p-6 w-full">
+        <div className="w-full max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs text-center space-y-4">
+          <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold text-base mx-auto mb-2">
+            P
+          </div>
+          <div className="space-y-1">
+            <h1 className="text-base font-bold text-slate-900 dark:text-white">Detail Profil Anggota</h1>
+            <p className="text-xs text-slate-500">Silakan masuk untuk mengelola profil dan privasi akun Anda.</p>
           </div>
 
-          {/* Nomor WhatsApp */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Nomor WhatsApp
-            </label>
-            <input
-              type="tel"
-              required
-              value={formData.whatsapp}
-              onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-
-          {/* Foto Profil URL */}
-          <div className="sm:col-span-2">
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              URL Foto Profil
-            </label>
-            <input
-              type="url"
-              value={formData.photoURL}
-              onChange={(e) => setFormData({ ...formData, photoURL: e.target.value })}
-              placeholder="https://..."
-              className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-
-          {/* Denominasi Gereja */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Denominasi Gereja
-            </label>
-            <input
-              type="text"
-              value={formData.denominasiGereja}
-              onChange={(e) => setFormData({ ...formData, denominasiGereja: e.target.value })}
-              placeholder="Contoh: GKE, HKBP, GPdI, GBI"
-              className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-
-          {/* Tanggal Lahir */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Tanggal Lahir
-            </label>
-            <input
-              type="date"
-              value={formData.tanggalLahir}
-              onChange={(e) => setFormData({ ...formData, tanggalLahir: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-
-          {/* Instagram */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Akun Instagram
-            </label>
-            <input
-              type="text"
-              value={formData.instagram}
-              onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
-              placeholder="@username"
-              className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-
-          {/* LinkedIn */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Tautan LinkedIn
-            </label>
-            <input
-              type="text"
-              value={formData.linkedin}
-              onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })}
-              placeholder="https://linkedin.com/in/..."
-              className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-
-          {/* Minat & Bakat */}
-          <div className="sm:col-span-2">
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Minat & Bakat / Bidang Pelayanan
-            </label>
-            <input
-              type="text"
-              value={formData.minatBakat}
-              onChange={(e) => setFormData({ ...formData, minatBakat: e.target.value })}
-              placeholder="Contoh: Musik / Worship, Multimedia, Pemrograman, Olahraga"
-              className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
+          <div className="space-y-2 pt-2">
+            <Link
+              href="/login?returnUrl=/profile"
+              className="w-full py-2.5 px-4 rounded-xl font-semibold text-white bg-indigo-600 hover:bg-indigo-700 text-xs transition-colors flex items-center justify-center gap-2"
+            >
+              Masuk Sekarang
+            </Link>
+            <Link
+              href="/directory"
+              className="w-full py-2.5 px-4 rounded-xl font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-xs transition-colors flex items-center justify-center gap-2"
+            >
+              Lihat Direktori Publik
+            </Link>
           </div>
         </div>
+      </div>
+    );
+  }
 
-        {/* Locked Akademik Section */}
-        <div className="pt-5 border-t border-slate-100 dark:border-slate-800">
-          <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2.5">
-            Data Akademik Terverifikasi (Terkunci)
-          </h3>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
-            <div>
-              <span className="text-[10px] uppercase font-bold text-slate-400 block">NIM</span>
-              <p className="text-xs font-mono font-bold text-slate-800 dark:text-slate-200">{profile.nim}</p>
+  // PROFIL PENGGUNA YANG SEDANG LOGIN (SUB-TAB BERSIH)
+  return (
+    <div className="flex-1 min-h-[85vh] flex flex-col items-center justify-center p-4 sm:p-6 w-full">
+      <div className="w-full max-w-md sm:max-w-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs space-y-5">
+        {/* Header Platform */}
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <div className="w-6 h-6 rounded bg-indigo-600 flex items-center justify-center text-white font-bold text-xs">
+              P
             </div>
-            <div>
-              <span className="text-[10px] uppercase font-bold text-slate-400 block">Prodi</span>
-              <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">{profile.prodi}</p>
-            </div>
-            <div>
-              <span className="text-[10px] uppercase font-bold text-slate-400 block">Angkatan</span>
-              <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">{profile.angkatan}</p>
-            </div>
-            <div>
-              <span className="text-[10px] uppercase font-bold text-slate-400 block">Jalur Masuk</span>
-              <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">{profile.jalurMasuk}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Privasi Direktori */}
-        <div className="pt-5 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
-          <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-            Pengaturan Privasi Direktori
-          </h3>
-
-          <div className="space-y-2">
-            <label className="flex items-center gap-2.5 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={formData.hidePhotoInDirectory}
-                onChange={(e) => setFormData({ ...formData, hidePhotoInDirectory: e.target.checked })}
-                className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500"
-              />
-              <span className="text-xs text-slate-700 dark:text-slate-300">
-                Sembunyikan foto profil saya di Direktori Anggota Publik (tampilkan inisial huruf).
-              </span>
-            </label>
-
-            <label className="flex items-center gap-2.5 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={formData.hideProfileInDirectory}
-                onChange={(e) => setFormData({ ...formData, hideProfileInDirectory: e.target.checked })}
-                className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500"
-              />
-              <span className="text-xs text-slate-700 dark:text-slate-300">
-                Sembunyikan profil saya dari daftar Direktori Anggota Publik.
-              </span>
-            </label>
-          </div>
-        </div>
-
-        {/* Submit */}
-        <div className="flex justify-end pt-3 border-t border-slate-100 dark:border-slate-800">
-          <button
-            type="submit"
-            disabled={saving}
-            className="px-5 py-2.5 rounded-lg font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors flex items-center gap-2 text-sm disabled:opacity-60 cursor-pointer"
+            <span className="text-xs font-bold text-slate-900 dark:text-white tracking-tight">
+              Akun PSAK FT UPR
+            </span>
+          </Link>
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1 text-[11px] text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
           >
-            {saving ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Menyimpan...
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4" />
-                Simpan Perubahan
-              </>
-            )}
+            <ArrowLeft className="w-3 h-3" />
+            Kembali
+          </Link>
+        </div>
+
+        {/* Sub / Tab Navigasi Bersih */}
+        <div className="grid grid-cols-3 gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl">
+          <button
+            type="button"
+            onClick={() => setActiveTab("detail")}
+            className={`py-2 px-2 rounded-lg text-xs font-semibold transition-colors text-center ${
+              activeTab === "detail"
+                ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+            }`}
+          >
+            Detail Profil
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("privacy")}
+            className={`py-2 px-2 rounded-lg text-xs font-semibold transition-colors text-center ${
+              activeTab === "privacy"
+                ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+            }`}
+          >
+            Privasi
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("account")}
+            className={`py-2 px-2 rounded-lg text-xs font-semibold transition-colors text-center ${
+              activeTab === "account"
+                ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+            }`}
+          >
+            Akun & Sandi
           </button>
         </div>
-      </form>
+
+        {/* Alerts */}
+        {error && (
+          <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 flex items-start gap-2 text-xs text-rose-700 dark:text-rose-300">
+            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {success && (
+          <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center gap-2 text-xs text-emerald-800 dark:text-emerald-300">
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-600" />
+            <span>{success}</span>
+          </div>
+        )}
+
+        {/* TAB 1: DETAIL PROFIL */}
+        {activeTab === "detail" && (
+          <form onSubmit={handleSave} className="space-y-4">
+            <div className="space-y-3">
+              <div>
+                <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                  Nama Lengkap
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.displayName}
+                  onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+                  className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                  URL Foto Profil
+                </label>
+                <input
+                  type="url"
+                  value={formData.photoURL}
+                  onChange={(e) => setFormData({ ...formData, photoURL: e.target.value })}
+                  placeholder="https://..."
+                  className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                    Nomor WhatsApp
+                  </label>
+                  <input
+                    type="tel"
+                    value={formData.whatsapp}
+                    onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                    className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                    Denominasi Gereja
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.denominasiGereja}
+                    onChange={(e) => setFormData({ ...formData, denominasiGereja: e.target.value })}
+                    placeholder="Contoh: GKE, HKBP, GPdI"
+                    className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                  Minat & Bakat Pelayanan / Karir
+                </label>
+                <input
+                  type="text"
+                  value={formData.minatBakat}
+                  onChange={(e) => setFormData({ ...formData, minatBakat: e.target.value })}
+                  placeholder="Contoh: Musik / Worship, IT, Desain Grafis, Logistik"
+                  className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                />
+              </div>
+
+              {/* Data Akademik Terkunci */}
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800/80 space-y-2">
+                <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                  <Lock className="w-3 h-3 text-amber-600" />
+                  Data Akademik Permanen
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">NIM</span>
+                    <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{profile?.nim || "-"}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">Jurusan</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">{profile?.prodi || "-"}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">Angkatan</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">{profile?.angkatan || "-"}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">Jalur Masuk</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">{profile?.jalurMasuk || "-"}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={saving}
+              className="w-full py-2.5 px-4 rounded-xl font-semibold text-white bg-indigo-600 hover:bg-indigo-700 text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer mt-2"
+            >
+              {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+              Simpan Perubahan
+            </button>
+          </form>
+        )}
+
+        {/* TAB 2: PRIVASI DIREKTORI */}
+        {activeTab === "privacy" && (
+          <form onSubmit={handleSave} className="space-y-4">
+            <div className="space-y-3">
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+                <div>
+                  <p className="font-semibold text-xs text-slate-900 dark:text-white">
+                    Sembunyikan Profil di Direktori
+                  </p>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Nama dan info Anda tidak akan muncul dalam daftar pencarian mahasiswa publik.
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={formData.hideProfileInDirectory}
+                  onChange={(e) => setFormData({ ...formData, hideProfileInDirectory: e.target.checked })}
+                  className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300"
+                />
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+                <div>
+                  <p className="font-semibold text-xs text-slate-900 dark:text-white">
+                    Sembunyikan Foto Profil
+                  </p>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Direktori publik hanya akan menampilkan avatar inisial nama tanpa foto asli Anda.
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={formData.hidePhotoInDirectory}
+                  onChange={(e) => setFormData({ ...formData, hidePhotoInDirectory: e.target.checked })}
+                  className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={saving}
+              className="w-full py-2.5 px-4 rounded-xl font-semibold text-white bg-indigo-600 hover:bg-indigo-700 text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer mt-2"
+            >
+              {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+              Simpan Pengaturan Privasi
+            </button>
+          </form>
+        )}
+
+        {/* TAB 3: AKUN & KEAMANAN */}
+        {activeTab === "account" && (
+          <div className="space-y-4 text-xs">
+            <div className="bg-slate-50 dark:bg-slate-950/60 rounded-xl p-3.5 border border-slate-200/80 dark:border-slate-800/80 space-y-2.5">
+              <div className="flex justify-between items-center py-0.5 border-b border-slate-200/60 dark:border-slate-800/60 pb-2">
+                <span className="text-slate-500">Email Akun</span>
+                <span className="font-mono font-medium text-slate-800 dark:text-slate-200">{user.email}</span>
+              </div>
+              <div className="flex justify-between items-center py-0.5 border-b border-slate-200/60 dark:border-slate-800/60 pb-2">
+                <span className="text-slate-500">Peran Sistem</span>
+                <span className="font-bold text-indigo-600 capitalize">{profile?.role || "Anggota"}</span>
+              </div>
+              <div className="flex justify-between items-center py-0.5">
+                <span className="text-slate-500">Status Akun</span>
+                <span className="font-bold text-emerald-600 capitalize">{profile?.status || "Aktif"}</span>
+              </div>
+            </div>
+
+            <div className="space-y-2 pt-1">
+              <button
+                type="button"
+                onClick={handlePasswordReset}
+                disabled={resettingPassword}
+                className="w-full py-2.5 px-4 rounded-xl font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs transition-colors flex items-center justify-center gap-2"
+              >
+                {resettingPassword ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <KeyRound className="w-3.5 h-3.5" />}
+                Kirim Tautan Ubah Kata Sandi
+              </button>
+
+              <button
+                type="button"
+                onClick={() => logout()}
+                className="w-full py-2 px-4 rounded-xl font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-xs transition-colors flex items-center justify-center gap-1.5"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                Keluar dari Akun Ini
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={
+      <div className="flex-1 min-h-[85vh] flex items-center justify-center p-4">
+        <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+      </div>
+    }>
+      <ProfileContent />
+    </Suspense>
   );
 }

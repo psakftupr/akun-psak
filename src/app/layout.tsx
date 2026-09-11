@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/firebase/auth-context";
-import { Navbar } from "@/components/navbar";
-import { Footer } from "@/components/footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Akun PSAK FT UPR | Single Sign-On & Layanan Mahasiswa",
+  title: "Akun PSAK FT UPR | Single Sign-On & Identitas Mahasiswa",
   description: "Platform SSO dan direktori keanggotaan Persekutuan Sivitas Akademika Kristen Fakultas Teknik Universitas Palangka Raya (PSAK FT UPR).",
 };
 
@@ -32,9 +30,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-indigo-500 selection:text-white">
         <AuthProvider>
-          <Navbar />
           <main className="flex-1 flex flex-col">{children}</main>
-          <Footer />
         </AuthProvider>
       </body>
     </html>
