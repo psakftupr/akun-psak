@@ -58,6 +58,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           minatBakat: data.minatBakat || "",
           hidePhotoInDirectory: data.hidePhotoInDirectory || false,
           hideProfileInDirectory: data.hideProfileInDirectory || false,
+          maskNameInDirectory: data.maskNameInDirectory || false,
           customToken: data.customToken,
           createdAt: data.createdAt,
           updatedAt: data.updatedAt,

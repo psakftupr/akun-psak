@@ -46,6 +46,7 @@ function ProfileContent() {
     minatBakat: "",
     hidePhotoInDirectory: false,
     hideProfileInDirectory: false,
+    maskNameInDirectory: false,
   });
 
   // State untuk melihat profil publik anggota lain jika ada targetUid
@@ -94,6 +95,7 @@ function ProfileContent() {
         minatBakat: profile.minatBakat || "",
         hidePhotoInDirectory: profile.hidePhotoInDirectory || false,
         hideProfileInDirectory: profile.hideProfileInDirectory || false,
+        maskNameInDirectory: profile.maskNameInDirectory || false,
       });
     }
   }, [profile, targetUid, user]);
@@ -129,6 +131,7 @@ function ProfileContent() {
           minatBakat: formData.minatBakat.trim(),
           hidePhotoInDirectory: formData.hidePhotoInDirectory,
           hideProfileInDirectory: formData.hideProfileInDirectory,
+          maskNameInDirectory: formData.maskNameInDirectory,
           updatedAt: new Date().toISOString(),
         },
         { merge: true }
@@ -499,6 +502,23 @@ function ProfileContent() {
                   type="checkbox"
                   checked={formData.hidePhotoInDirectory}
                   onChange={(e) => setFormData({ ...formData, hidePhotoInDirectory: e.target.checked })}
+                  className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300"
+                />
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+                <div>
+                  <p className="font-semibold text-xs text-slate-900 dark:text-white">
+                    Samarkan Nama Lengkap di Direktori
+                  </p>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Menampilkan nama depan dan inisial belakang (Contoh: "Agus P.") untuk menjaga privasi di pencarian publik.
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={formData.maskNameInDirectory}
+                  onChange={(e) => setFormData({ ...formData, maskNameInDirectory: e.target.checked })}
                   className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300"
                 />
               </div>

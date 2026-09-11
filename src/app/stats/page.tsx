@@ -87,7 +87,50 @@ export default function StatsPage() {
         setAngkatanStats(calcPercent(angkatanMap).slice(0, 8));
         setJalurMasukStats(calcPercent(jalurMap));
       } catch (err) {
-        console.error("Error loading stats:", err);
+        console.warn("Direct Firestore read restricted, trying public REST API:", err);
+        try {
+          const res = await fetch("/api/members/public");
+          if (res.ok) {
+            const json = await res.json();
+            const membersList = json.members || [];
+            let total = membersList.length;
+            let active = total;
+            const prodiMap: Record<string, number> = {
+              "Teknik Informatika": 0,
+              "Teknik Sipil": 0,
+              "Arsitektur": 0,
+              "Teknik Pertambangan": 0,
+            };
+            const angkatanMap: Record<string, number> = {};
+
+            membersList.forEach((m: any) => {
+              if (m.prodi && prodiMap[m.prodi] !== undefined) prodiMap[m.prodi]++;
+              else if (m.prodi) prodiMap[m.prodi] = (prodiMap[m.prodi] || 0) + 1;
+
+              const a = String(m.angkatan || "");
+              if (a && a !== "undefined" && a !== "0") {
+                angkatanMap[a] = (angkatanMap[a] || 0) + 1;
+              }
+            });
+
+            setTotalMembers(total);
+            setActiveMembers(active);
+
+            const calcPercent = (map: Record<string, number>) =>
+              Object.entries(map)
+                .map(([name, count]) => ({
+                  name,
+                  count,
+                  percentage: total > 0 ? Math.round((count / total) * 100) : 0,
+                }))
+                .sort((a, b) => b.count - a.count);
+
+            setProdiStats(calcPercent(prodiMap));
+            setAngkatanStats(calcPercent(angkatanMap).slice(0, 8));
+          }
+        } catch (apiErr) {
+          console.error("Error loading stats from public API:", apiErr);
+        }
       } finally {
         setLoading(false);
       }

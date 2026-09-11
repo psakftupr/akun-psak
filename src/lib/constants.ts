@@ -49,6 +49,7 @@ export interface UserProfile {
   minatBakat?: string;
   hidePhotoInDirectory?: boolean;
   hideProfileInDirectory?: boolean;
+  maskNameInDirectory?: boolean;
   customToken?: string;
   createdAt?: string;
   updatedAt?: string;

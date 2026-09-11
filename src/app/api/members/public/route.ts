@@ -36,10 +36,19 @@ export async function GET(request: NextRequest) {
 
       const hidePhotoInDirectory = f.hidePhotoInDirectory?.booleanValue || false;
       const hideProfileInDirectory = f.hideProfileInDirectory?.booleanValue || false;
+      const maskNameInDirectory = f.maskNameInDirectory?.booleanValue || false;
 
       if (hideProfileInDirectory) return;
 
-      const displayName = f.displayName?.stringValue || "Anggota PSAK";
+      let displayName = f.displayName?.stringValue || "Anggota PSAK";
+      if (maskNameInDirectory && displayName) {
+        const parts = displayName.trim().split(/\s+/);
+        if (parts.length > 1) {
+          displayName = `${parts[0]} ${parts.slice(1).map((p: string) => `${p[0].toUpperCase()}.`).join(" ")}`;
+        } else if (parts[0].length > 2) {
+          displayName = `${parts[0].slice(0, 2)}***`;
+        }
+      }
       const photoURL = hidePhotoInDirectory
         ? "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y"
         : f.photoURL?.stringValue || "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";

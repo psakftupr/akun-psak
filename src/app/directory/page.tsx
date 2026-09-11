@@ -28,6 +28,18 @@ interface PublicMember {
   instagram?: string;
   linkedin?: string;
   minatBakat?: string;
+  maskNameInDirectory?: boolean;
+}
+
+export function formatDirectoryDisplayName(fullName: string, isMasked?: boolean): string {
+  if (!isMasked || !fullName) return fullName;
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length === 1) {
+    return parts[0].length > 2 ? `${parts[0].slice(0, 2)}***` : parts[0];
+  }
+  const firstName = parts[0];
+  const initials = parts.slice(1).map((p) => `${p[0].toUpperCase()}.`).join(" ");
+  return `${firstName} ${initials}`;
 }
 
 export default function DirectoryPage() {
@@ -40,6 +52,7 @@ export default function DirectoryPage() {
   useEffect(() => {
     async function loadMembers() {
       try {
+        // Coba ambil dari Firestore langsung
         const usersRef = collection(db, "users");
         const q = query(usersRef, where("status", "==", "aktif"), limit(200));
         const snap = await getDocs(q);
@@ -60,12 +73,22 @@ export default function DirectoryPage() {
             instagram: data.instagram,
             linkedin: data.linkedin,
             minatBakat: data.minatBakat,
+            maskNameInDirectory: data.maskNameInDirectory || false,
           });
         });
 
         setMembers(list);
       } catch (err) {
-        console.error("Error loading directory members:", err);
+        console.warn("Direct Firestore read restricted, trying public REST API:", err);
+        try {
+          const res = await fetch("/api/members/public");
+          if (res.ok) {
+            const json = await res.json();
+            if (json.members) setMembers(json.members);
+          }
+        } catch (apiErr) {
+          console.error("Error loading directory members from API:", apiErr);
+        }
       } finally {
         setLoading(false);
       }
@@ -179,36 +202,38 @@ export default function DirectoryPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-          {filteredMembers.map((m) => (
-            <div
-              key={m.uid}
-              className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-colors"
-            >
-              <div className="flex items-start gap-3">
-                {m.photoURL ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={m.photoURL}
-                    alt={m.displayName}
-                    className="w-11 h-11 rounded-lg object-cover border border-slate-200 dark:border-slate-700 flex-shrink-0"
-                  />
-                ) : (
-                  <div className="w-11 h-11 rounded-lg bg-indigo-600 text-white font-bold text-sm flex items-center justify-center flex-shrink-0">
-                    {m.displayName[0].toUpperCase()}
+          {filteredMembers.map((m) => {
+            const shownName = formatDirectoryDisplayName(m.displayName, m.maskNameInDirectory);
+            return (
+              <div
+                key={m.uid}
+                className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-colors"
+              >
+                <div className="flex items-start gap-3">
+                  {m.photoURL ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={m.photoURL}
+                      alt={shownName}
+                      className="w-11 h-11 rounded-lg object-cover border border-slate-200 dark:border-slate-700 flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-11 h-11 rounded-lg bg-indigo-600 text-white font-bold text-sm flex items-center justify-center flex-shrink-0">
+                      {shownName[0].toUpperCase()}
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <h2 className="font-semibold text-xs text-slate-900 dark:text-white truncate">
+                      {shownName}
+                    </h2>
+                    <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                      {m.prodi}
+                    </p>
+                    <span className="inline-block text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 mt-1">
+                      Angkatan {m.angkatan}
+                    </span>
                   </div>
-                )}
-                <div className="min-w-0 flex-1">
-                  <h2 className="font-semibold text-xs text-slate-900 dark:text-white truncate">
-                    {m.displayName}
-                  </h2>
-                  <p className="text-[11px] text-slate-500 truncate mt-0.5">
-                    {m.prodi}
-                  </p>
-                  <span className="inline-block text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 mt-1">
-                    Angkatan {m.angkatan}
-                  </span>
                 </div>
-              </div>
 
               {/* Action / Detail Link */}
               <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
@@ -246,7 +271,8 @@ export default function DirectoryPage() {
                 </div>
               </div>
             </div>
-          ))}
+          );
+        })}
         </div>
       )}
     </div>
