@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/firebase/auth-context";
 import { 
   User, 
@@ -17,9 +18,15 @@ import {
 } from "lucide-react";
 
 export const Navbar: React.FC = () => {
+  const pathname = usePathname();
   const { user, profile, isAdmin, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  // Jangan tampilkan navbar di landing page (/) agar bersih dan fokus pada profil pengguna
+  if (pathname === "/") {
+    return null;
+  }
 
   return (
     <header className="sticky top-0 z-50 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 transition-colors">

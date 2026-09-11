@@ -1,9 +1,19 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ORG_NAME, ORG_FULL_NAME } from "@/lib/constants";
 import { ShieldCheck, Globe, Code2, Heart } from "lucide-react";
 
 export const Footer: React.FC = () => {
+  const pathname = usePathname();
+
+  // Jangan tampilkan footer di landing page (/) agar bersih dan fokus
+  if (pathname === "/") {
+    return null;
+  }
+
   return (
     <footer className="border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 py-10 mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
