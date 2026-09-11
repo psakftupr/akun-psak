@@ -23,8 +23,9 @@ export const Navbar: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  // Jangan tampilkan navbar di landing page (/) agar bersih dan fokus pada profil pengguna
-  if (pathname === "/") {
+  // Sembunyikan navbar pada rute landing & autentikasi agar bersih, terpusat, dan fokus
+  const authRoutes = ["/", "/login", "/forgot-password", "/register", "/sso-auth"];
+  if (authRoutes.includes(pathname)) {
     return null;
   }
 

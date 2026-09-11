@@ -9,8 +9,9 @@ import { ShieldCheck, Globe, Code2, Heart } from "lucide-react";
 export const Footer: React.FC = () => {
   const pathname = usePathname();
 
-  // Jangan tampilkan footer di landing page (/) agar bersih dan fokus
-  if (pathname === "/") {
+  // Sembunyikan footer pada rute landing & autentikasi agar bersih, terpusat, dan fokus
+  const authRoutes = ["/", "/login", "/forgot-password", "/register", "/sso-auth"];
+  if (authRoutes.includes(pathname)) {
     return null;
   }
 
