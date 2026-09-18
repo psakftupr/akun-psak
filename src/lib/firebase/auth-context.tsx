@@ -12,6 +12,13 @@ interface AuthContextType {
   loading: boolean;
   isAdmin: boolean;
   isSuperadmin: boolean;
+  isPengurusInti: boolean;
+  isPengurusKoordinator: boolean;
+  isKoordinator: boolean;
+  isPengurusHarian: boolean;
+  isPengurusMuda: boolean;
+  isDemisioner: boolean;
+  isPengurus: boolean;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -22,6 +29,13 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   isAdmin: false,
   isSuperadmin: false,
+  isPengurusInti: false,
+  isPengurusKoordinator: false,
+  isKoordinator: false,
+  isPengurusHarian: false,
+  isPengurusMuda: false,
+  isDemisioner: false,
+  isPengurus: false,
   logout: async () => {},
   refreshProfile: async () => {},
 });
@@ -105,8 +119,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setProfile(null);
   }, []);
 
-  const isAdmin = profile?.role === "admin" || profile?.role === "superadmin";
-  const isSuperadmin = profile?.role === "superadmin";
+  const isPengurusInti = profile?.role === "superadmin" || profile?.role === "pengurus_inti";
+  const isSuperadmin = isPengurusInti;
+  const isPengurusKoordinator = profile?.role === "admin" || profile?.role === "koordinator" || profile?.role === "pengurus_koordinator";
+  const isKoordinator = isPengurusKoordinator;
+  const isAdmin = isSuperadmin || isPengurusKoordinator;
+  const isPengurusHarian = profile?.role === "pengurus_harian" || profile?.role === "pengurus";
+  const isPengurusMuda = profile?.role === "pengurus_muda";
+  const isDemisioner = profile?.role === "demisioner";
+  const isPengurus = isPengurusInti || isPengurusKoordinator || isPengurusHarian || isPengurusMuda;
 
   return (
     <AuthContext.Provider
@@ -116,6 +137,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loading,
         isAdmin,
         isSuperadmin,
+        isPengurusInti,
+        isPengurusKoordinator,
+        isKoordinator,
+        isPengurusHarian,
+        isPengurusMuda,
+        isDemisioner,
+        isPengurus,
         logout,
         refreshProfile,
       }}

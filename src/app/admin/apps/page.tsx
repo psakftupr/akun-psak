@@ -16,8 +16,10 @@ import {
   Loader2, 
   Lock, 
   CheckCircle2, 
-  AlertTriangle 
+  AlertTriangle,
+  Code2
 } from "lucide-react";
+import SSOIntegrationModal from "@/components/admin/SSOIntegrationModal";
 
 export default function AdminAppsPage() {
   const { isSuperadmin } = useAuth();
@@ -29,6 +31,7 @@ export default function AdminAppsPage() {
   const [newAppRedirects, setNewAppRedirects] = useState("");
   const [addingApp, setAddingApp] = useState(false);
   const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [selectedAppForGuide, setSelectedAppForGuide] = useState<any>(null);
 
   const loadApps = async () => {
     setLoading(true);
@@ -275,22 +278,36 @@ export default function AdminAppsPage() {
                     )}
                   </div>
 
-                  {isSuperadmin && (
-                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                    <button
+                      onClick={() => setSelectedAppForGuide(app)}
+                      className="px-2.5 py-1 rounded text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 flex items-center gap-1 transition-colors"
+                    >
+                      <Code2 className="w-3.5 h-3.5" />
+                      Panduan & Sandbox
+                    </button>
+
+                    {isSuperadmin && (
                       <button
                         onClick={() => handleToggleApp(app)}
                         className="px-2.5 py-1 rounded text-xs font-medium bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200"
                       >
                         {app.active ? "Nonaktifkan" : "Aktifkan"}
                       </button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </div>
       </div>
+
+      <SSOIntegrationModal
+        isOpen={Boolean(selectedAppForGuide)}
+        onClose={() => setSelectedAppForGuide(null)}
+        app={selectedAppForGuide}
+      />
     </div>
   );
 }

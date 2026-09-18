@@ -22,8 +22,13 @@ import {
   KeyRound,
   LogOut,
   ExternalLink,
-  Globe
+  Globe,
+  Camera,
+  Trash2,
+  PartyPopper
 } from "lucide-react";
+import { uploadProfilePhoto, isGifFile } from "@/lib/photo-upload";
+import { formatRoleName } from "@/lib/constants";
 
 function ProfileContent() {
   const router = useRouter();
@@ -57,6 +62,32 @@ function ProfileContent() {
   const [resettingPassword, setResettingPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoUploadError, setPhotoUploadError] = useState<string | null>(null);
+
+  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setPhotoUploadError(null);
+    setUploadingPhoto(true);
+    try {
+      const res = await uploadProfilePhoto(file);
+      setFormData((prev) => ({ ...prev, photoURL: res.url }));
+    } catch (err: any) {
+      setPhotoUploadError(err.message || "Gagal mengunggah foto.");
+    } finally {
+      setUploadingPhoto(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    setFormData((prev) => ({ ...prev, photoURL: "" }));
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   // Load public profile if targetUid is provided and not current user
   useEffect(() => {
@@ -378,16 +409,77 @@ function ProfileContent() {
               </div>
 
               <div>
-                <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
-                  URL Foto Profil
+                <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1 flex items-center justify-between">
+                  <span>Foto Profil (Gambar / GIF Animasi)</span>
+                  <span className="text-[10px] text-indigo-600 dark:text-indigo-400">Dukungan GIF Aktif</span>
                 </label>
+                
                 <input
-                  type="url"
-                  value={formData.photoURL}
-                  onChange={(e) => setFormData({ ...formData, photoURL: e.target.value })}
-                  placeholder="https://..."
-                  className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handlePhotoSelect}
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  className="hidden"
                 />
+
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
+                  <div className="relative w-12 h-12 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    {formData.photoURL ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={formData.photoURL} alt="Foto Profil" className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="w-6 h-6 text-slate-400" />
+                    )}
+                    {uploadingPhoto && (
+                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex-1 space-y-1">
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingPhoto}
+                        className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
+                      >
+                        {uploadingPhoto ? (
+                          <>
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                            Mengunggah...
+                          </>
+                        ) : (
+                          <>
+                            <Camera className="w-3 h-3" />
+                            Pilih Foto / GIF
+                          </>
+                        )}
+                      </button>
+
+                      {formData.photoURL && (
+                        <button
+                          type="button"
+                          onClick={handleRemovePhoto}
+                          disabled={uploadingPhoto}
+                          className="px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:text-rose-600 text-[11px] flex items-center gap-1 cursor-pointer"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          Hapus
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-slate-500">Maks. 5MB (JPG, PNG, WebP, GIF)</p>
+                  </div>
+                </div>
+
+                {photoUploadError && (
+                  <p className="text-[10px] text-rose-600 dark:text-rose-400 mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                    {photoUploadError}
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -415,6 +507,27 @@ function ProfileContent() {
                     className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   />
                 </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[11px] font-medium text-slate-600 dark:text-slate-400">
+                    Tanggal Lahir
+                  </label>
+                  <Link
+                    href="/birthday"
+                    className="inline-flex items-center gap-1 text-[10px] font-bold text-pink-600 dark:text-pink-400 hover:underline"
+                  >
+                    <PartyPopper className="w-3 h-3" />
+                    Buka Kartu Ulang Tahun
+                  </Link>
+                </div>
+                <input
+                  type="date"
+                  value={formData.tanggalLahir}
+                  onChange={(e) => setFormData({ ...formData, tanggalLahir: e.target.value })}
+                  className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                />
               </div>
 
               <div>
@@ -545,7 +658,7 @@ function ProfileContent() {
               </div>
               <div className="flex justify-between items-center py-0.5 border-b border-slate-200/60 dark:border-slate-800/60 pb-2">
                 <span className="text-slate-500">Peran Sistem</span>
-                <span className="font-bold text-indigo-600 capitalize">{profile?.role || "Anggota"}</span>
+                <span className="font-bold text-indigo-600">{formatRoleName(profile?.role)}</span>
               </div>
               <div className="flex justify-between items-center py-0.5">
                 <span className="text-slate-500">Status Akun</span>

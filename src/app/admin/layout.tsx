@@ -13,7 +13,10 @@ import {
   Settings, 
   ArrowLeft, 
   LogOut, 
-  Loader2 
+  Loader2,
+  Activity,
+  Database,
+  KeyRound
 } from "lucide-react";
 
 export default function AdminLayout({
@@ -62,16 +65,16 @@ export default function AdminLayout({
                 </span>
               </Link>
 
-              {/* Distinction: SUPER ADMIN vs ADMIN */}
+              {/* Distinction: PENGURUS INTI (PI) vs PENGURUS KOORDINATOR (PK) */}
               {isSuperadmin ? (
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-300 dark:border-purple-800 uppercase tracking-wide">
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-300 dark:border-purple-800 tracking-wide">
                   <Crown className="w-3 h-3 text-amber-500 fill-amber-500" />
-                  Super Admin
+                  Pengurus Inti (PI)
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-800 uppercase tracking-wide">
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-800 tracking-wide">
                   <ShieldCheck className="w-3 h-3 text-amber-600" />
-                  Admin
+                  Pengurus Koordinator (PK)
                 </span>
               )}
             </div>
@@ -100,6 +103,42 @@ export default function AdminLayout({
               >
                 <AppWindow className="w-3.5 h-3.5" />
                 Aplikasi SSO
+              </Link>
+
+              <Link
+                href="/admin/logs"
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
+                  pathname === "/admin/logs"
+                    ? "bg-slate-100 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                }`}
+              >
+                <Activity className="w-3.5 h-3.5" />
+                Log Sistem
+              </Link>
+
+              <Link
+                href="/admin/roles"
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
+                  pathname === "/admin/roles"
+                    ? "bg-slate-100 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                }`}
+              >
+                <KeyRound className="w-3.5 h-3.5" />
+                Hak Akses
+              </Link>
+
+              <Link
+                href="/admin/backup"
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
+                  pathname === "/admin/backup"
+                    ? "bg-slate-100 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                }`}
+              >
+                <Database className="w-3.5 h-3.5" />
+                Backup Data
               </Link>
 
               <Link
@@ -144,10 +183,10 @@ export default function AdminLayout({
       </main>
 
       {/* 3. MOBILE BOTTOM NAVIGATION BAR */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-3 py-2 flex items-center justify-around shadow-lg">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-2 py-2 flex items-center justify-around shadow-lg">
         <Link
           href="/admin/users"
-          className={`flex flex-col items-center gap-1 text-[10px] font-semibold transition-colors ${
+          className={`flex flex-col items-center gap-1 text-[9px] font-semibold transition-colors ${
             pathname === "/admin/users" || pathname === "/admin"
               ? "text-indigo-600 dark:text-indigo-400"
               : "text-slate-500"
@@ -159,19 +198,43 @@ export default function AdminLayout({
 
         <Link
           href="/admin/apps"
-          className={`flex flex-col items-center gap-1 text-[10px] font-semibold transition-colors ${
+          className={`flex flex-col items-center gap-1 text-[9px] font-semibold transition-colors ${
             pathname === "/admin/apps"
               ? "text-indigo-600 dark:text-indigo-400"
               : "text-slate-500"
           }`}
         >
           <AppWindow className="w-4 h-4" />
-          Aplikasi SSO
+          Aplikasi
+        </Link>
+
+        <Link
+          href="/admin/logs"
+          className={`flex flex-col items-center gap-1 text-[9px] font-semibold transition-colors ${
+            pathname === "/admin/logs"
+              ? "text-indigo-600 dark:text-indigo-400"
+              : "text-slate-500"
+          }`}
+        >
+          <Activity className="w-4 h-4" />
+          Log
+        </Link>
+
+        <Link
+          href="/admin/backup"
+          className={`flex flex-col items-center gap-1 text-[9px] font-semibold transition-colors ${
+            pathname === "/admin/backup"
+              ? "text-indigo-600 dark:text-indigo-400"
+              : "text-slate-500"
+          }`}
+        >
+          <Database className="w-4 h-4" />
+          Backup
         </Link>
 
         <Link
           href="/admin/config"
-          className={`flex flex-col items-center gap-1 text-[10px] font-semibold transition-colors ${
+          className={`flex flex-col items-center gap-1 text-[9px] font-semibold transition-colors ${
             pathname === "/admin/config"
               ? "text-indigo-600 dark:text-indigo-400"
               : "text-slate-500"
@@ -183,7 +246,7 @@ export default function AdminLayout({
 
         <Link
           href="/"
-          className="flex flex-col items-center gap-1 text-[10px] font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
+          className="flex flex-col items-center gap-1 text-[9px] font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Beranda

@@ -20,6 +20,7 @@ import {
   CheckCircle2,
   Phone
 } from "lucide-react";
+import { formatRoleName } from "@/lib/constants";
 
 export default function HomePage() {
   const router = useRouter();
@@ -109,8 +110,8 @@ export default function HomePage() {
                 {profile.email}
               </p>
               <div className="flex items-center gap-2 mt-1.5">
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 capitalize">
-                  {profile.role || "Anggota"}
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                  {formatRoleName(profile.role)}
                 </span>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 capitalize">
                   {profile.status || "Aktif"}

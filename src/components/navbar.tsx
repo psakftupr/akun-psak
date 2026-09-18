@@ -16,6 +16,7 @@ import {
   Settings,
   Sparkles
 } from "lucide-react";
+import { formatRoleName } from "@/lib/constants";
 
 export const Navbar: React.FC = () => {
   const pathname = usePathname();
@@ -106,8 +107,8 @@ export const Navbar: React.FC = () => {
                     <p className="text-xs font-semibold text-slate-900 dark:text-white leading-tight truncate max-w-[130px]">
                       {profile?.displayName || user.email?.split("@")[0]}
                     </p>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 capitalize">
-                      {profile?.role || "anggota"}
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                      {formatRoleName(profile?.role)}
                     </p>
                   </div>
                 </button>

@@ -25,15 +25,56 @@ export const GENDER_OPTIONS = [
 export const STATUS_KEANGGOTAAN_OPTIONS = [
   "Mahasiswa Aktif",
   "Alumni",
-  "Pengurus",
+  "Pengurus Inti",
+  "Pengurus Koordinator",
+  "Pengurus Harian",
+  "Pengurus Muda",
+  "Demisioner",
 ] as const;
+
+export const ROLE_OPTIONS = [
+  { value: "anggota", label: "Anggota" },
+  { value: "pengurus_muda", label: "Pengurus Muda (PM)" },
+  { value: "pengurus_harian", label: "Pengurus Harian (PH)" },
+  { value: "admin", label: "Pengurus Koordinator (PK)" },
+  { value: "superadmin", label: "Pengurus Inti (PI)" },
+  { value: "demisioner", label: "Demisioner" },
+] as const;
+
+export const KOORDINATOR_MANAGEABLE_ROLES = [
+  { value: "anggota", label: "Anggota" },
+  { value: "pengurus_muda", label: "Pengurus Muda (PM)" },
+  { value: "pengurus_harian", label: "Pengurus Harian (PH)" },
+] as const;
+
+export function formatRoleName(role?: string): string {
+  switch (role) {
+    case "superadmin":
+    case "pengurus_inti":
+      return "Pengurus Inti (PI)";
+    case "admin":
+    case "koordinator":
+    case "pengurus_koordinator":
+      return "Pengurus Koordinator (PK)";
+    case "pengurus_harian":
+    case "pengurus":
+      return "Pengurus Harian (PH)";
+    case "pengurus_muda":
+      return "Pengurus Muda (PM)";
+    case "demisioner":
+      return "Demisioner";
+    case "anggota":
+    default:
+      return "Anggota";
+  }
+}
 
 export interface UserProfile {
   uid: string;
   email: string;
   displayName: string;
   photoURL?: string;
-  role: "anggota" | "admin" | "superadmin";
+  role: "anggota" | "pengurus_muda" | "pengurus_harian" | "pengurus_koordinator" | "koordinator" | "admin" | "pengurus_inti" | "superadmin" | "demisioner" | "pengurus";
   status: "aktif" | "suspen";
   nim: string;
   gender: "Laki-laki" | "Perempuan";
@@ -41,7 +82,7 @@ export interface UserProfile {
   angkatan: number;
   jalurMasuk: "SNBP" | "SNBT" | "SNMPTN" | "SBMPTN" | "MANDIRI";
   whatsapp: string;
-  statusKeanggotaan?: "Mahasiswa Aktif" | "Alumni" | "Pengurus";
+  statusKeanggotaan?: "Mahasiswa Aktif" | "Alumni" | "Pengurus Inti" | "Pengurus Koordinator" | "Pengurus Harian" | "Pengurus Muda" | "Demisioner" | "Pengurus";
   denominasiGereja?: string;
   tanggalLahir?: string;
   instagram?: string;

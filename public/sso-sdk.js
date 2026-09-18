@@ -1,98 +1,128 @@
 /**
- * PSAK FT UPR - Single Sign-On (SSO) Client SDK
+ * PSAK Single Sign-On (SSO) JavaScript SDK v2.0
  * https://akun.psak.my.id
+ *
+ * Usage:
+ * <script src="https://akun.psak.my.id/sso-sdk.js"></script>
+ * <script>
+ *   const sso = new PsakSSO({
+ *     clientId: 'your_client_id',
+ *     redirectUri: 'https://your-app.com/callback'
+ *   });
+ *
+ *   async function handleLogin() {
+ *     try {
+ *       const result = await sso.loginPopup();
+ *       console.log("Auth Code:", result.code);
+ *     } catch (err) {
+ *       console.error("SSO Error:", err);
+ *     }
+ *   }
+ * </script>
  */
+
 (function (window) {
   class PsakSSO {
-    constructor(config) {
-      if (!config || !config.clientId) {
-        throw new Error("PsakSSO: 'clientId' is required in configuration.");
+    constructor(config = {}) {
+      if (!config.clientId) {
+        console.error("[PsakSSO] clientId is required!");
       }
       this.clientId = config.clientId;
-      this.ssoBaseUrl = config.ssoBaseUrl || (window.location.origin.includes("localhost") ? window.location.origin : "https://akun.psak.my.id");
+      this.redirectUri = config.redirectUri || window.location.href;
+      this.ssoOrigin = config.ssoOrigin || window.location.origin;
+      this.scope = config.scope || "read:profile";
     }
 
     /**
-     * Buka jendela popup login SSO & minta izin otorisasi
-     * @param {Object} options
-     * @param {boolean} options.verifyOnClient - Jika true, langsung lakukan verifikasi token ke API /api/sso/verify
-     * @returns {Promise<Object>} Data profil pengguna atau token authorization code
+     * Standard Redirect Flow
      */
-    login(options = { verifyOnClient: true }) {
+    loginRedirect(state = "") {
+      const authUrl = new URL(`${this.ssoOrigin}/sso/authorize`);
+      authUrl.searchParams.set("client_id", this.clientId);
+      authUrl.searchParams.set("redirect_uri", this.redirectUri);
+      authUrl.searchParams.set("response_type", "code");
+      authUrl.searchParams.set("scope", this.scope);
+      if (state) authUrl.searchParams.set("state", state);
+
+      window.location.href = authUrl.toString();
+    }
+
+    /**
+     * Interactive Popup Flow
+     * Opens centered popup window and resolves when authentication finishes
+     */
+    loginPopup(options = {}) {
       return new Promise((resolve, reject) => {
-        const state = "psak_state_" + Math.random().toString(36).substring(2, 10);
-        const authUrl = `${this.ssoBaseUrl}/sso-auth?client_id=${encodeURIComponent(this.clientId)}&state=${encodeURIComponent(state)}`;
+        const width = options.width || 520;
+        const height = options.height || 680;
+        const left = window.screenX + (window.outerWidth - width) / 2;
+        const top = window.screenY + (window.outerHeight - height) / 2.5;
 
-        const width = 500;
-        const height = 650;
-        const left = window.screen.width / 2 - width / 2;
-        const top = window.screen.height / 2 - height / 2;
+        const callbackUrl = options.callbackUrl || `${this.ssoOrigin}/sso-popup-callback`;
 
-        const popup = window.open(
-          authUrl,
-          "PsakSSOLoginPopup",
-          `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,status=no,resizable=yes`
+        const authUrl = new URL(`${this.ssoOrigin}/sso/authorize`);
+        authUrl.searchParams.set("client_id", this.clientId);
+        authUrl.searchParams.set("redirect_uri", callbackUrl);
+        authUrl.searchParams.set("response_type", "code");
+        authUrl.searchParams.set("scope", this.scope);
+        authUrl.searchParams.set("display", "popup");
+
+        const popupWindow = window.open(
+          authUrl.toString(),
+          "psak_sso_popup",
+          `width=${width},height=${height},left=${left},top=${top},status=no,toolbar=no,menubar=no`
         );
 
-        if (!popup || popup.closed || typeof popup.closed === "undefined") {
-          reject(new Error("Popup diblokir oleh peramban (browser). Izinkan popup untuk melanjutkan login SSO."));
-          return;
+        if (!popupWindow) {
+          return reject(new Error("Popup blocked by browser. Please allow popups for this site."));
         }
 
-        const handleMessage = async (event) => {
-          // Hanya tangani event PSAK_SSO
-          if (!event.data || (event.data.type !== "PSAK_SSO_SUCCESS" && event.data.type !== "PSAK_SSO_CANCEL")) {
-            return;
-          }
+        // Message Listener
+        const messageHandler = async (event) => {
+          if (!event.data || event.data.type !== "PSAK_SSO_SUCCESS") return;
 
-          window.removeEventListener("message", handleMessage);
+          window.removeEventListener("message", messageHandler);
+          clearInterval(pollTimer);
 
-          if (event.data.type === "PSAK_SSO_CANCEL") {
-            reject(new Error("Pengguna membatalkan proses otorisasi SSO."));
-            return;
-          }
+          const { code } = event.data;
 
-          if (event.data.type === "PSAK_SSO_SUCCESS") {
-            const code = event.data.code;
-            if (!code) {
-              reject(new Error("Respons otorisasi tidak menyertakan kode valid."));
-              return;
-            }
-
-            if (!options.verifyOnClient) {
-              resolve({ code, state: event.data.state });
-              return;
-            }
-
-            // Verifikasi langsung di sisi client melalui API
+          if (options.verifyOnClient && options.clientSecret) {
             try {
-              const verifyRes = await fetch(`${this.ssoBaseUrl}/api/sso/verify?code=${encodeURIComponent(code)}&client_id=${encodeURIComponent(this.clientId)}`);
-              const verifyJson = await verifyRes.json();
-
-              if (!verifyRes.ok || !verifyJson.success) {
-                reject(new Error(verifyJson.error || "Gagal memverifikasi token SSO."));
-                return;
+              const verifyRes = await fetch(`${this.ssoOrigin}/api/sso/verify-token`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  client_id: this.clientId,
+                  client_secret: options.clientSecret,
+                  code,
+                }),
+              });
+              const verifyData = await verifyRes.json();
+              if (verifyRes.ok && verifyData.success) {
+                return resolve({ code, user: verifyData.user });
               }
-
-              resolve(verifyJson.user);
-            } catch (fetchErr) {
-              reject(new Error("Gagal menghubungi server verifikasi SSO: " + fetchErr.message));
+            } catch (vErr) {
+              console.warn("[PsakSSO] Client verification error:", vErr);
             }
           }
+
+          resolve({ code });
         };
 
-        window.addEventListener("message", handleMessage);
+        window.addEventListener("message", messageHandler);
 
-        // Pantau jika popup ditutup manual oleh pengguna sebelum selesai
-        const timer = setInterval(() => {
-          if (popup.closed) {
-            clearInterval(timer);
-            window.removeEventListener("message", handleMessage);
+        // Detect popup closed manually by user
+        const pollTimer = setInterval(() => {
+          if (popupWindow.closed) {
+            clearInterval(pollTimer);
+            window.removeEventListener("message", messageHandler);
+            reject(new Error("Login window was closed by user."));
           }
-        }, 1000);
+        }, 500);
       });
     }
   }
 
+  // Export to global window
   window.PsakSSO = PsakSSO;
-})(window);
+})(typeof window !== "undefined" ? window : this);
